@@ -42,10 +42,11 @@ function Listing(props) {
     );
   }
   const [searchTerm, setSearchTerm] = useState('');
+  
   const recordList =
     getRecord.allRecords.filter((record) => {
       if (searchTerm === "") {
-        return null
+        return displayRecord
       } else if (
         (searchTerm !== "" && (record.title || '').toLowerCase().includes(searchTerm.toLowerCase()))
         ||
@@ -98,7 +99,7 @@ function Listing(props) {
           </tr>
         </thead>
         <tbody>
-          {displayRecord}
+          {recordList}
         </tbody>
       </table>
     </div>
