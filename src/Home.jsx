@@ -1,4 +1,4 @@
-import React, { useReducer, useState } from 'react'
+import React, { useReducer, useState,useEffect } from 'react'
 import AddForm from './components/AddForm'
 import Listing from './components/Listing'
 import { nanoid } from 'nanoid'
@@ -9,12 +9,8 @@ import EditForm from './components/EditForm'
 
 const initstate = {
   allRecords : [],
-  singleRecord : {
-    id : '',
-    title: '',
-    votes: '',
-    date: '',
-  }
+  singleRecord : { id : '', title: '', votes: '', date: '' },
+  editRecord : { id : '', title: '', votes: '', date: '' } 
 }
 
 function reducer(state,action){
@@ -22,50 +18,92 @@ function reducer(state,action){
     case "addRecord": 
       return {
           allRecords : [...state.allRecords],
-          singleRecord: {
-            ...state.singleRecord,
-            [action.payload.name] : action.payload.value,
-            id: nanoid()
-          }       
+          singleRecord: {...state.singleRecord,[action.payload.name] : action.payload.value, id: nanoid()},     
+          editRecord: {...state.editRecord},
       }
+
       case "submitRecord":
         return {
-          allRecords : [
-            ...state.allRecords ,
-            state.singleRecord
-          ],
+          allRecords : [ ...state.allRecords , state.singleRecord ],
           singleRecord: {
-            ...state.singleRecord,
-            id: nanoid()
-          },     
+            id : '',
+            title: '',
+            votes: '',
+            date: '',
+          },  
+          editRecord: {...state.editRecord},     
         }
-       case "deleteRecord":
-            return {
-              allRecords : state.allRecords.filter(record=> (record.id !== action.payload)),
-              singleRecord: {
-                ...state.singleRecord,
-                id: nanoid()
-              },     
-            }
-            
-        case "updateRecord":
-          return {
-            allRecords : [
-              state.allRecords ,
-              state.singleRecord,
-            ],
-            singleRecord: {
-              ...state.singleRecord,
-              id: action.payload
-            },     
+      
+        case "submitEditedRecord":
+          
+          state.allRecords = state.allRecords.filter(record=> (record.id !== action.payload))
+        return{
+            allRecords : [state.editRecord,...state.allRecords],
+            singleRecord: {...state.singleRecord},  
+            editRecord: { id : '', title: '', votes: '', date: '' },    
           }
+          case "deleteRecord":
+          return {
+              allRecords : state.allRecords.filter(record=> (record.id !== action.payload)),
+              singleRecord: { ...state.singleRecord, id: nanoid() },  
+              editRecord: { ...state.editRecord}   
+            }
+       
+          case "editRecord":         
+          return{
+            allRecords : [...state.allRecords],
+            singleRecord: {...state.singleRecord},
+            editRecord: {...state.editRecord,[action.payload.name] : action.payload.value},
+          }
+
+          case "sortData":
+            {
+              if(action.payload === "upvoted"){
+                state.allRecords =state.allRecords.sort((a, b) => a.votes - b.votes).reverse()
+            }else if(action.payload === "recent"){
+              state.allRecords = state.allRecords.sort((a, b) => (new Date(a.date) || 0) - (new Date(b.date) || 0)).reverse()
+            }
+              return  {
+                allRecords : state.allRecords,
+                singleRecord: {...state.singleRecord},     
+                editRecord: {...state.editRecord},
+              }
+            }
+          case "populateEditRecord":
+          {
+            let thisEditRecord =[]
+            state.allRecords.map((record)=>{
+              if(action.payload === record.id){
+                thisEditRecord = {
+                  id : record.id,
+                  title: record.title,
+                  votes: record.votes,
+                  date: record.date,
+                }
+              }
+              return true
+            })
+            return {
+              allRecords : [ ...state.allRecords],
+              singleRecord: {...state.singleRecord},
+              editRecord: {
+                id : thisEditRecord.id,
+                title: thisEditRecord.title,
+                votes: thisEditRecord.votes,
+                date: thisEditRecord.date,
+              }     
+            }
+          }
+
       default:
         return state
     }
 } 
 
 function Home() {
+
   const [state, dispatch] = useReducer(reducer, initstate)
+
   function handleChange(e){
     dispatch({
         type: "addRecord",
@@ -73,8 +111,9 @@ function Home() {
       }
     )
   }
-  
+
 function submitRecord(e){
+  
   e.preventDefault();
   dispatch(
     {
@@ -88,29 +127,29 @@ function updateRecord(e,id){
     setIsEdit(false)
     dispatch(
       {
-        type : "updateRecord",
+        type : "submitEditedRecord",
         payload : id
       }
     )
+}
+
+function handleEditChange(e,id){
+  dispatch({
+    type: "editRecord",
+    payload: e.target,
+  }
+)
 }
 
 const [editData, setEditData] = useState([])
 const [isEdit, setIsEdit] = useState(false)
 
 function handleEdit(e,recordId){  
-  state.allRecords.map((records) => {
-    if(records.id === recordId){
-      setEditData(records)
       setIsEdit(true)
-    }
-    return true
-  })
-  dispatch(
-    {
-      type : "editRecord",
-      payload : recordId
-    }
-  )
+      dispatch({
+        type: "populateEditRecord",
+        payload : recordId
+      })
 }
 
 function handleDelete(e,recordId){
@@ -136,24 +175,32 @@ function handleDelete(e,recordId){
     }
   });
 }
+function sortedTerm(type){
+  dispatch(
+    {
+      type: "sortData",
+      payload: type
+  })
+}
 
-console.log(state)
   return (
     <>  
+    <Context.Provider value={state}>
         {!isEdit ?
         <AddForm
           handleChange = {handleChange}
           submitRecord={submitRecord}
         />:
          <EditForm 
-         data={editData}
-         handleChange = {handleChange}
+         handleEditChange = {handleEditChange}
          updateRecord={updateRecord}
          /> 
         }
-        <Context.Provider value={state.allRecords}>
+        
             <Listing handleDelete={handleDelete}
             handleEdit={handleEdit}
+            sortedTerm={sortedTerm}
+
             />
         </Context.Provider>
     </>

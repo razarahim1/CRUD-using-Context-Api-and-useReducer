@@ -1,6 +1,7 @@
-import React from 'react'
-
+import React, { useContext } from 'react'
+import Context from './Context'
 function AddForm(props) {
+  const getRecord = useContext(Context)
   return (
     <div className="form-fields">
             <form method='POST'>
@@ -11,6 +12,7 @@ function AddForm(props) {
                      placeholder="Enter title..." 
                      className="input-field" 
                      name="title"
+                     value={getRecord.singleRecord.title}
                      onChange={props.handleChange}/>
 
                     <input 
@@ -20,6 +22,8 @@ function AddForm(props) {
                     name="votes"
                     placeholder="Enter upvotes number between 0 to 100.." 
                     className="input-field" 
+                    value={getRecord.singleRecord.vote}
+
                     onChange={props.handleChange}/>
 
                     <input 
@@ -27,6 +31,7 @@ function AddForm(props) {
                     name="date"
                     placeholder="Enter Date.." 
                     className="input-field" 
+                    value={getRecord.singleRecord.date}
                     onChange={props.handleChange} />
 
                     <button 
