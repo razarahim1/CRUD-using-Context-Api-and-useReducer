@@ -2,7 +2,7 @@
   "name": "recordapp",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://razarahim1.github.io",
+  "homepage": "https://razarahim1.github.io/build",
   "dependencies": {
     "@sweetalert/with-react": "^0.1.1",
     "@testing-library/jest-dom": "^5.16.5",
